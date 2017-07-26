@@ -224,8 +224,8 @@ class LeadController extends FormController
                         ],
                         [
                             'column' => 'f.object',
-                            'expr' => 'like',
-                            'value' => 'lead',
+                            'expr'   => 'like',
+                            'value'  => 'lead',
                         ],
                     ],
                 ],
@@ -324,7 +324,7 @@ class LeadController extends FormController
         $socialProfiles = (array) $integrationHelper->getUserProfiles($lead, $fields);
         $socialProfileUrls = $integrationHelper->getSocialProfileUrlRegex(false);
         /* @var \Mautic\LeadBundle\Model\CompanyModel $model */
-        $companyModel = $this->getModel('lead.company');
+        $companyModel  = $this->getModel('lead.company');
         $companiesRepo = $companyModel->getRepository();
         $companies = $companiesRepo->getCompaniesByLeadId($objectId);
         // Set the social profile templates
@@ -1884,7 +1884,7 @@ class LeadController extends FormController
 
                     if (!empty($data['addowner'])) {
                         $userModel = $this->getModel('user');
-                        $user = $userModel->getEntity((int) $data['addowner']);
+                        $user      = $userModel->getEntity((int) $data['addowner']);
                         $lead->setOwner($user);
                     }
                 }
