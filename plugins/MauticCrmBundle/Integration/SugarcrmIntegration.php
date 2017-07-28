@@ -1300,7 +1300,7 @@ class SugarcrmIntegration extends CrmAbstractIntegration
             if ($key = array_search('mauticContactTimelineLink', $leadFields)) {
                 unset($leadFields[$key]);
             }
-            if ($key = array_search('mauticContactIsContactable', $leadFields)) {
+            if ($key = array_search('mauticContactIsContactableByEmail', $leadFields)) {
                 unset($leadFields[$key]);
             }
 
@@ -1329,8 +1329,7 @@ class SugarcrmIntegration extends CrmAbstractIntegration
         foreach ($leadsToUpdate as $object => $records) {
             foreach ($records as $lead) {
                 if (isset($lead['email']) && !empty($lead['email'])) {
-                    $lead['mauticContactTimelineLink']                          = $this->getContactTimelineLink($lead['internal_entity_id']);
-                    $lead['mauticContactIsContactable']                         = $this->getLeadDonotContact($lead['internal_entity_id']);
+                    $lead                                                       = $this->getCompoundMauticFields($lead);
                     $checkEmailsInSugar[$object][mb_strtolower($lead['email'])] = $lead;
                 }
             }
@@ -1345,8 +1344,7 @@ class SugarcrmIntegration extends CrmAbstractIntegration
             $leadsToCreate = $integrationEntityRepo->findLeadsToCreate('Sugarcrm', $fields, $limit, $fromDate, $toDate);
             foreach ($leadsToCreate as $lead) {
                 if (isset($lead['email'])) {
-                    $lead['mauticContactTimelineLink']                          = $this->getContactTimelineLink($lead['internal_entity_id']);
-                    $lead['mauticContactIsContactable']                         = $this->getLeadDonotContact($lead['internal_entity_id']);
+                    $lead                                                       = $this->getCompoundMauticFields($lead);
                     $checkEmailsInSugar['Leads'][mb_strtolower($lead['email'])] = $lead;
                 }
             }
