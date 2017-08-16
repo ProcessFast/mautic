@@ -982,10 +982,10 @@ class SalesforceIntegration extends CrmAbstractIntegration
                     if ((int) $row['delta'] > 0) {
                         $subject = 'added';
                     } else {
-                        $subject      = 'subtracted';
+                        $subject = 'subtracted';
                         $row['delta'] *= -1;
                     }
-                    $pointsString                = $translator->transChoice(
+                    $pointsString = $translator->transChoice(
                         "mautic.salesforce.activity.points_{$subject}",
                         $row['delta'],
                         ['%points%' => $row['delta']]
