@@ -1953,7 +1953,6 @@ class SugarcrmIntegration extends CrmAbstractIntegration
             $convertedSugarCrmMultiSelectString = $convertedSugarCrmMultiSelectString.'^'.$item.'^'.',';
         }
         $convertedSugarCrmMultiSelectString = substr($convertedSugarCrmMultiSelectString, 0, -1);
-
         return $convertedSugarCrmMultiSelectString;
     }
 
@@ -1993,7 +1992,6 @@ class SugarcrmIntegration extends CrmAbstractIntegration
             $convertedString     = $convertedString.$innerArray[2].'|';
         }
         $convertedString        = substr($convertedString, 0, -1);
-
         return $convertedString;
     }
 }
