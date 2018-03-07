@@ -312,9 +312,12 @@ class SugarcrmIntegration extends CrmAbstractIntegration
                                     //6.x/community
 
                                     foreach ($fields['module_fields'] as $fieldInfo) {
-                                        if (isset($fieldInfo['name']) && (!in_array($fieldInfo['type'], ['id', 'assigned_user_name', 'link', 'relate']) || ($fieldInfo['type'] == 'id' && $fieldInfo['name'] == 'id')
-                                            )
-                                        ) {
+                                        if (isset($fieldInfo['name']) && (!in_array($fieldInfo['type'], ['id', 'assigned_user_name', 'bool', 'link', 'relate'])
+                                        ||
+                                        ($fieldInfo['type'] == 'id' && $fieldInfo['name'] == 'id')
+                                                ||
+                                                ($fieldInfo['type'] == 'bool' && $fieldInfo['name'] == 'email_opt_out')
+                                        )) {
                                             $type      = 'string';
                                             $fieldName = (strpos($fieldInfo['name'],
                                                     'webtolead_email') === false) ? $fieldInfo['name'] : str_replace('webtolead_',
@@ -343,11 +346,11 @@ class SugarcrmIntegration extends CrmAbstractIntegration
                                     foreach ($fields['fields'] as $fieldInfo) {
                                         if (isset($fieldInfo['name']) && empty($fieldInfo['readonly'])
                                             && (!in_array(
-                                                    $fieldInfo['type'],
-                                                    ['id', 'team_list', 'link', 'relate']
-                                                )
-                                                ||
-                                                ($fieldInfo['type'] == 'id' && $fieldInfo['name'] == 'id')
+                                                $fieldInfo['type'],
+                                                ['id', 'team_list', 'bool', 'link', 'relate']
+                                            )
+                                            ||
+                                            ($fieldInfo['type'] == 'id' && $fieldInfo['name'] == 'id')
                                             )
                                         ) {
                                             if (!empty($fieldInfo['comment'])) {
@@ -1293,7 +1296,7 @@ class SugarcrmIntegration extends CrmAbstractIntegration
         $config                  = $this->mergeConfigToFeatureSettings();
         $integrationEntityRepo   = $this->em->getRepository('MauticPluginBundle:IntegrationEntity');
         $mauticData              = $leadsToUpdate              = $fields              = [];
-        $fieldsToUpdateInSugar   = isset($config['update_mautic']) ? array_keys($config['update_mautic'], 0) : [];
+        $fieldsToUpdateInSugar   = isset($config['update_mautic']) ? array_keys($config['update_mautic'], 1) : [];
         $leadFields              = $config['leadFields'];
         if (!empty($leadFields)) {
             if ($keys = array_keys($leadFields, 'mauticContactTimelineLink')) {
@@ -1885,7 +1888,12 @@ class SugarcrmIntegration extends CrmAbstractIntegration
      */
     protected function getPriorityFieldsForMautic($config, $object = null, $priorityObject = 'mautic')
     {
-        $fields = parent::getPriorityFieldsForMautic($config, $object, $priorityObject);
+        if ($object == 'company') {
+            $priority = parent::getPriorityFieldsForMautic($config, $object, 'mautic_company');
+            $fields   = array_intersect_key($config['companyFields'], $priority);
+        } else {
+            $fields = parent::getPriorityFieldsForMautic($config, $object, $priorityObject);
+        }
 
         return ($object && isset($fields[$object])) ? $fields[$object] : $fields;
     }
