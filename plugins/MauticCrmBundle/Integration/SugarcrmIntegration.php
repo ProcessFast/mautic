@@ -216,7 +216,9 @@ class SugarcrmIntegration extends CrmAbstractIntegration
      *
      * @param array $settings
      *
-     * @return array
+     * @return array|mixed
+     *
+     * @throws \Exception
      */
     public function getFormLeadFields($settings = [])
     {
@@ -316,7 +318,7 @@ class SugarcrmIntegration extends CrmAbstractIntegration
                                         ||
                                         ($fieldInfo['type'] == 'id' && $fieldInfo['name'] == 'id')
                                                 ||
-                                                ($fieldInfo['type'] == 'bool' && $fieldInfo['name'] == 'email_opt_out')
+                                                ($fieldInfo['type'] == 'bool')
                                         )) {
                                             $type      = 'string';
                                             $fieldName = (strpos($fieldInfo['name'],

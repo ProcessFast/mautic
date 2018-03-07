@@ -340,6 +340,13 @@ abstract class CrmAbstractIntegration extends AbstractIntegration
             $company = $existingCompany[2];
         }
 
+        $companyFieldTypes = $this->fieldModel->getFieldListWithProperties('company');
+        foreach ($matchedFields as $companyField => $value) {
+            if (isset($companyFieldTypes[$companyField]['type']) && $companyFieldTypes[$companyField]['type'] == 'text') {
+                $matchedFields[$companyField] = substr($value, 0, 255);
+            }
+        }
+
         if (!empty($existingCompany[2])) {
             $fieldsToUpdate = $this->getPriorityFieldsForMautic($config, $object, 'mautic_company');
             $fieldsToUpdate = array_intersect_key($config['companyFields'], $fieldsToUpdate);
@@ -351,11 +358,10 @@ abstract class CrmAbstractIntegration extends AbstractIntegration
             if (empty($matchedFields['companyname'])) {
                 return null;
             }
-            // Last flag needs to be true in order to properly update synced values that are erased or changed
-            $companyModel->setFieldValues($company, $matchedFields, true);
         }
 
-        $companyModel->saveEntity($company, false);
+        $this->companyModel->setFieldValues($company, $matchedFields, true);
+        $this->companyModel->saveEntity($company, false);
 
         return $company;
     }
