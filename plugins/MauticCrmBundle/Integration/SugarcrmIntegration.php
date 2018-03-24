@@ -837,14 +837,51 @@ class SugarcrmIntegration extends CrmAbstractIntegration
                 } else {
                     $newName = '__'.$object;
                 }
+                $repo = $this->em->getRepository('MauticLeadBundle:LeadField');
+                $config = $this->mergeConfigToFeatureSettings([]);
+                
                 if ($SUGAR_VERSION == '6') {
                     foreach ($record['name_value_list'] as $k=>$item) {
                         if ($object !== 'Activity') {
+
+                            // Need to check data types and values here and do some conversion/typecasting first for proper saving and sync
+                            $nameToCheck = $item['name'].$newName;                                             
                             if ($this->checkIfSugarCrmMultiSelectString($item['value'])) {
                                 $convertedMultiSelectString         = $this->convertSuiteCrmToMauticMultiSelect($item['value']);
                                 $dataObject[$item['name'].$newName] = $convertedMultiSelectString;
+                            } else if (array_key_exists($nameToCheck,$config['leadFields'])) {
+                                    // This is in the lead field
+                                    $mauticFieldAlias = $config['leadFields'][$nameToCheck];
+                                    // The Mautic do not email flag is not stored in the lead_fields table
+                                    if ($mauticFieldAlias == 'mauticContactIsContactableByEmail') {
+                                        $dataObject[$item['name'].$newName] = (boolean) $item['value'];
+                                        continue;
+                                    }
+                                    $leadField = $repo->findOneBy(['alias' => $mauticFieldAlias]);
+                                    $fieldType = $leadField->getType();
+
+                                    if ($fieldType == 'boolean') {
+                                        $dataObject[$item['name'].$newName] = (boolean) $item['value'];
+                                    } else if( $fieldType == 'number') {
+                                        $dataObject[$item['name'].$newName] = (int) $item['value'];
+                                    } else {
+                                        $dataObject[$item['name'].$newName] = $item['value'];
+                                    }  
+                            } else if (array_key_exists($nameToCheck,$config['companyFields'])) {
+                                    // This is in the lead field
+                                    $mauticFieldAlias = $config['companyFields'][$nameToCheck];
+                                    $leadField = $repo->findOneBy(['alias' => $mauticFieldAlias]);
+                                    $fieldType = $leadField->getType();
+                                    if ($fieldType == 'boolean') {
+                                        // NOT Typecasting this one since it later fails a check when checking current value vs. new value
+                                        $dataObject[$item['name'].$newName] = $item['value'];
+                                    } else if( $fieldType == 'number') {
+                                        $dataObject[$item['name'].$newName] = (int) $item['value'];
+                                    } else {
+                                        $dataObject[$item['name'].$newName] = $item['value'];
+                                    }  
                             } else {
-                                $dataObject[$item['name'].$newName] = $item['value'];
+                            	    $dataObject[$item['name'].$newName] = $item['value'];
                             }
                             if ($item['name'] == 'date_entered') {
                                 $itemDateEntered = new \DateTime($item['value']);
@@ -1605,16 +1642,50 @@ class SugarcrmIntegration extends CrmAbstractIntegration
         if (isset($lead['email']) && !empty($lead['email'])) {
             //update and create (one query) every 200 records
 
+            $repo = $this->em->getRepository('MauticLeadBundle:LeadField');
+			$config = $this->mergeConfigToFeatureSettings([]);
+            
             foreach ($fieldsToUpdateInSugarUpdate as $sugarField => $mauticField) {
                 $required = !empty($availableFields[$object][$sugarField.'__'.$object]['required']);
                 if (isset($lead[$mauticField])) {
                     if (strpos($lead[$mauticField], '|') !== false) {
                         // Transform Mautic Multi Select into SugarCRM/SuiteCRM Multi Select format
-                        $value = $this->convertMauticToSuiteCrmMultiSelect($lead[$mauticField]);
+                        $sugarCrmMultiSelectString = $this->convertMauticToSuiteCrmMultiSelect($lead[$mauticField]);
+                        $body[]                    = ['name' => $sugarField, 'value' => $sugarCrmMultiSelectString];
+                        
+                    } else if (in_array($mauticField,$config['leadFields'])) {
+                            // Check data types and convert/typecast here before pushing data back to CRM integration so it syncs properly
+                            $leadField = $repo->findOneBy(['alias' => $mauticField]);
+                            $fieldType = $leadField->getType();
+
+                            if ( $fieldType == 'boolean') {
+                                $value                     = (boolean) $lead[$mauticField];
+                                $body[]                    = ['name' => $sugarField, 'value' => $value];
+                            } else if ( $fieldType == 'number') {
+                                $value                     = (int) $lead[$mauticField];
+                                $body[]                    = ['name' => $sugarField, 'value' => $value];
+                            } else {
+                                $body[]                    = ['name' => $sugarField, 'value' => $value];
+                            }  
+                        
+                    } else if (in_array($mauticField,$config['companyFields'])) {
+                            // Check data types and convert/typecast here before pushing data back to CRM integration so it syncs properly
+                            $leadField = $repo->findOneBy(['alias' => $mauticField]);
+                            $fieldType = $leadField->getType();
+
+                            if ( $fieldType == 'boolean') {
+                                $value                     = (boolean) $lead[$mauticField];
+                                $body[]                    = ['name' => $sugarField, 'value' => $value];
+                            } else if ( $fieldType == 'number') {
+                                $value                     = (int) $lead[$mauticField];
+                                $body[]                    = ['name' => $sugarField, 'value' => $value];
+                            } else {
+                                $body[]                    = ['name' => $sugarField, 'value' => $value];
+                            }  
+                        
                     } else {
-                        $value = $lead[$mauticField];
+                        $body[]                    = ['name' => $sugarField, 'value' => $lead[$mauticField]];
                     }
-                    $body[] = ['name' => $sugarField, 'value' =>  $value];
                 } elseif ($required) {
                     $value  = $this->factory->getTranslator()->trans('mautic.integration.form.lead.unknown');
                     $body[] = ['name' => $sugarField, 'value' => $value];
