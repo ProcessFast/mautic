@@ -351,10 +351,11 @@ abstract class CrmAbstractIntegration extends AbstractIntegration
             if (empty($matchedFields['companyname'])) {
                 return null;
             }
+            // Last flag needs to be true in order to properly update synced values that are erased or changed
+            $companyModel->setFieldValues($company, $matchedFields, true);
         }
 
-        $this->companyModel->setFieldValues($company, $matchedFields, false);
-        $this->companyModel->saveEntity($company, false);
+        $companyModel->saveEntity($company, false);
 
         return $company;
     }
