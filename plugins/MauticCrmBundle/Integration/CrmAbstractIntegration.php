@@ -300,7 +300,7 @@ abstract class CrmAbstractIntegration extends AbstractIntegration
      * @param      $data
      * @param null $object
      *
-     * @return Company|null
+     * @return Company|void
      */
     public function getMauticCompany($data, $object = null)
     {
